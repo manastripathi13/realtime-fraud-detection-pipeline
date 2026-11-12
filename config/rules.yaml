@@ -1,0 +1,39 @@
+# Fraud scoring rules.
+# The running pipeline re-reads this file every `reload_seconds`, so you can
+# change thresholds or switch rules on/off WITHOUT stopping the pipeline.
+# (This is how "weekly rule updates with zero downtime" works.)
+
+version: 1
+reload_seconds: 15
+alert_threshold: 50          # a transaction with total score >= this becomes an alert
+
+rules:
+  velocity:
+    enabled: true
+    description: Too many transactions on the same card in a short time window
+    window_seconds: 60
+    max_txns: 5
+    score: 40
+
+  amount_spike:
+    enabled: true
+    description: Amount far above this customer's normal spend
+    multiplier: 4.0
+    score: 50
+
+  geo_mismatch:
+    enabled: true
+    description: Card's home country differs from the country of the IP address
+    score: 30
+
+  card_testing:
+    enabled: true
+    description: Very small "test" amounts, a common trick before a large fraud
+    max_amount: 2.00
+    score: 25
+
+  new_device_high_value:
+    enabled: true
+    description: Device never seen for this customer AND a high amount
+    min_amount: 800
+    score: 25

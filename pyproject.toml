@@ -1,0 +1,14 @@
+[project]
+name = "realtime-fraud-detection-pipeline"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "apache-beam[gcp]>=2.60",
+    "dbt-duckdb>=1.11.1",
+    "duckdb>=2.0.0",
+    "faker>=40.54.0",
+    "google-cloud-pubsub>=2.43.0",
+    "pandas>=3.1.1",
+    "pytest>=9.2.0",
+    "pyyaml>=6.0.3",
+]

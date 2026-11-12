@@ -1,0 +1,6 @@
+rule_name,description
+velocity,Too many transactions on the same card in a short window
+amount_spike,Amount far above the customer's normal spend
+geo_mismatch,Card home country differs from IP country
+card_testing,Very small test amounts before a larger fraud
+new_device_high_value,Unknown device plus a high amount

@@ -1,0 +1,7 @@
+# Local stand-in for Google Cloud Pub/Sub (official emulator image).
+services:
+  pubsub:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=local-fraud-demo
+    ports:
+      - "8085:8085"

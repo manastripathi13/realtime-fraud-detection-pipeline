@@ -1,0 +1,19 @@
+version: 2
+models:
+  - name: fct_fraud_alerts
+    description: One row per fraud alert, ready for a BI dashboard.
+    columns:
+      - name: transaction_id
+        data_tests: [unique, not_null]
+      - name: fraud_score
+        data_tests: [not_null]
+  - name: agg_revenue_at_risk_daily
+    description: Daily booking value vs value flagged as fraud, by merchant category.
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            columns: [event_date, merchant_category]
+  - name: rpt_rule_effectiveness
+    description: Precision of each rule against the simulator's ground truth.
+  - name: rpt_pipeline_health
+    description: Latency and detection quality of the whole pipeline in one row.

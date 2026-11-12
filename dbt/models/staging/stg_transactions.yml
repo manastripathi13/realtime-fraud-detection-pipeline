@@ -1,0 +1,16 @@
+version: 2
+models:
+  - name: stg_transactions
+    description: Cleaned transactions with fraud scores (Silver layer).
+    columns:
+      - name: transaction_id
+        data_tests: [unique, not_null]
+      - name: merchant_category
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [hotel, airline, car_rental, ota, cruise]
+      - name: amount_usd
+        data_tests: [not_null]
+      - name: fraud_score
+        data_tests: [not_null]

@@ -1,0 +1,17 @@
+version: 2
+sources:
+  - name: raw
+    description: Bronze layer. Written by the streaming Beam pipeline with idempotent MERGE.
+    schema: "{{ 'fraud_raw' if target.type == 'bigquery' else 'raw' }}"
+    tables:
+      - name: scored_transactions
+        description: One row per transaction after enrichment and rule scoring.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 15, period: minute}
+          error_after: {count: 60, period: minute}
+        columns:
+          - name: transaction_id
+            data_tests: [unique, not_null]
+      - name: dead_letter
+        description: Messages that failed parsing or validation.

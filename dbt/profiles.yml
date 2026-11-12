@@ -1,0 +1,18 @@
+# Two targets, same models:
+#   local -> DuckDB file written by the pipeline (default, no cloud needed)
+#   bq    -> real BigQuery (set GCP_PROJECT and log in with `gcloud auth application-default login`)
+fraud_analytics:
+  target: "{{ env_var('DBT_TARGET', 'local') }}"
+  outputs:
+    local:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_PATH', '../data/warehouse.duckdb') }}"
+      schema: main
+      threads: 4
+    bq:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GCP_PROJECT', 'set-me') }}"
+      dataset: fraud
+      location: US
+      threads: 4
