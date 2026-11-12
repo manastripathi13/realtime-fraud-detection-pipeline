@@ -20,7 +20,35 @@ Streaming pipeline that scores card payments for travel bookings (hotels, airlin
 
 Latency is measured from when the payment happened to when the scored row landed in the warehouse. Tripling the load needed no code or design change. Recall is about 55 to 65%, because the first few payments of a fast fraud burst look normal until the velocity rule has enough history. That trade-off is discussed below.
 
-## Run it locally (no cloud account needed)
+## Run it with Airflow (the main way)
+
+All pipeline runs go through Airflow. The DAGs live in [`airflow/dags/`](airflow/dags/):
+
+| DAG | Schedule | Tasks |
+|---|---|---|
+| `fraud_detection_pipeline` | manual (params `seconds`, `rate`) | `start_pubsub` → `stream_window` → `dbt_build_gold` → `check_latency_sla` → `report` |
+| `fraud_gold_refresh` | every 15 min (paused by default) | `check_bronze_freshness` → `dbt_build_silver_gold` → `check_latency_sla` |
+
+`stream_window` starts the Beam streaming job, publishes payments for `seconds`, lets it drain and stops it, so a run has a clear start and end on a laptop. In production the Dataflow job runs continuously and `fraud_gold_refresh` is what Composer schedules.
+
+**Start a local Airflow 3 pointed at this repo's DAGs** (web UI on http://localhost:8081, no login):
+
+```bash
+uv venv --python 3.12 ~/airflow-venv
+curl -sO https://raw.githubusercontent.com/apache/airflow/constraints-3.2.2/constraints-3.12.txt
+uv pip install --python ~/airflow-venv/bin/python -c constraints-3.12.txt apache-airflow==3.2.2 apache-airflow-providers-standard
+
+export AIRFLOW_HOME=~/airflow AIRFLOW__CORE__DAGS_FOLDER="$PWD/airflow/dags" AIRFLOW__CORE__LOAD_EXAMPLES=False \
+       AIRFLOW__API__PORT=8081 AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS=True \
+       AIRFLOW__CORE__EXECUTION_API_SERVER_URL=http://localhost:8081/execution/ PATH="$HOME/airflow-venv/bin:$PATH"
+airflow standalone
+```
+
+Tasks call this repo's own `uv` environment (`uv run ...`), so Airflow and the project keep separate dependencies. The constraints file pins Airflow's dependencies to the versions it was tested with; without it a newer Pydantic breaks Airflow 3.2's API server.
+
+Then open the UI, unpause `fraud_detection_pipeline` and click **Trigger**. A 30-second run takes about 2 minutes, and all five tasks go green.
+
+## Run it without Airflow (no cloud account needed)
 
 Requirements: Docker Desktop, [uv](https://docs.astral.sh/uv/), Python 3.12 (uv installs it).
 
@@ -127,7 +155,8 @@ pipeline/rules.py                   rule engine with hot reload
 pipeline/sinks.py                   DuckDB / BigQuery MERGE sinks
 config/rules.yaml                   fraud rules (editable at runtime)
 dbt/                                Silver + Gold models, tests, BigQuery/DuckDB profiles
-airflow/dags/fraud_gold_refresh.py  Cloud Composer DAG
+airflow/dags/                       Airflow DAGs: fraud_detection_pipeline (end to end), fraud_gold_refresh (Composer, every 15 min)
+scripts/stream_window.sh            bounded streaming run used by the DAG
 scripts/run_demo.sh                 one-command local demo
 tests/test_rules.py                 unit tests
 ```
