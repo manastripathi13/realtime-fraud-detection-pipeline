@@ -4,6 +4,8 @@ Streaming pipeline that scores card payments for travel bookings (hotels, airlin
 
 **Stack:** GCP Pub/Sub · Dataflow (Apache Beam) · BigQuery · Cloud Composer (Airflow) · dbt · Python · Docker
 
+**System design:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) has the architecture diagrams and a step-by-step walkthrough of the design, decisions and failure handling.
+
 ```
  producer ──► Pub/Sub ──► Beam / Dataflow (streaming) ──► BigQuery Bronze ──► dbt Silver/Gold ──► dashboards
  (payments)   topic       parse → enrich → velocity      MERGE on            (Composer runs     revenue at risk,
